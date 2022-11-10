@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true
+  },
+  "types": ["react-native", "jest", "styled-components-react-native"],
+  "include": ["vite.config.ts"]
+}
