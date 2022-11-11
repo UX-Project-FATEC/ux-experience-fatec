@@ -1,41 +1,51 @@
-import react from 'react'
+import react, {useState}  from 'react'
 import styled from "styled-components"
 
-import { Container, Title, InputFile, TitleSpan, TitleSpan2, SubTitle} from "./styles"
+import { 
+  Container, 
+  Title, 
+  InputFile, 
+  TitleSpan, 
+  TitleSpan2, 
+  SubTitle, 
+  FormSubmit, 
+  ButtonSubmit
+  } from "./styles"
 
-import Logo from './logo.png'
+import Logo from '../../assets/images/logo.png'
 
-import { getStorage, ref, uploadBytes } from "firebase/storage";
+import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
+import { storage } from '../../config/firebase';
 
 function Home() {
-  // Create a root reference
-  const storage = getStorage();
+    
+  const [imgURL, setImgURL] = useState("");
+  const [progressPorcent, setPorgessPorcent] = useState(0);
 
-  // Create a reference to 'mountains.jpg'
-  const mountainsRef = ref(storage, 'mountains.jpg');
-
-  // Create a reference to 'images/mountains.jpg'
-  const mountainImagesRef = ref(storage, 'images/mountains.jpg');
-
-  // While the file names are the same, the references point to different files
-  mountainsRef.name === mountainImagesRef.name;           // true
-  mountainsRef.fullPath === mountainImagesRef.fullPath;   // false 
-
-
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: any) => {
     event.preventDefault();
     const file = event.target[0]?.files[0];
+    if (!file) return;
 
+    const storageRef = ref(storage, `${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-    const storage = getStorage();
-    const storageRef = ref(storage, 'some-child');
-
-    // 'file' comes from the Blob or File API
-    uploadBytes(storageRef, file).then((snapshot) => {
-      console.log('Uploaded a blob or file!');
-    });
-    }
-
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        window.alert('Arquivo enviado com sucesso')
+      },
+      (error) => {
+        alert(error);
+        window.alert('Ops, tente enviar novamente')
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setImgURL(downloadURL);
+        });
+      }
+    );
+  };
 
   return (
     <Container>
@@ -43,11 +53,10 @@ function Home() {
       <Title>SELECIONE O <TitleSpan>ARQUIVO</TitleSpan> PARA CONSUMO</Title>
       <SubTitle><TitleSpan2>1.</TitleSpan2> Faça upload do arquivo</SubTitle>
       <SubTitle><TitleSpan2>2.</TitleSpan2> Aguarde a análise dos seus dados</SubTitle>
-      <form onSubmit={handleSubmit} >
-        <InputFile type={"file"} accept={".csv"} ></InputFile>
-        <input type="submit" value="" />
-      </form>
-      
+      <FormSubmit onSubmit={handleSubmit} >
+        <InputFile type={"file"} accept={".csv"}></InputFile>
+        <ButtonSubmit type="submit" value="ENVIAR" />
+      </FormSubmit>
     </Container>
   )
 }
